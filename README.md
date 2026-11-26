@@ -30,8 +30,6 @@ documentos escritos y solo una parte de los casos requiere criterio humano.
 seguido y nadie los actualiza en la base de conocimiento (el agente
 respondería con información vieja).
 
-> Reemplazá los números por tus estimaciones reales. Son un ejemplo.
-
 ## 3. Por qué un AI Agent con RAG y no un nodo de IA simple
 
 - **Un nodo de IA simple** recibe un texto y devuelve otro texto. No decide
