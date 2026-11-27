@@ -1,0 +1,830 @@
+{
+  "name": "Proyecto final",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Empleado: {{ $json.nombre }}\nAntigüedad: {{ $json.antiguedad_anios }} años\nÁrea: {{ $json.area }}\n\nConsulta: {{ $('Webhook').item.json.query.pregunta }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres el asistente de RRHH de Pastelería Rica. Respondes consultas de\nempleados con tono cordial, claro y profesional, en español.\n\nDATOS QUE RECIBES:\n- Datos del empleado (nombre, antigüedad, área), provenientes de la hoja Empleados.\n- La consulta del empleado.\n- Una herramienta que busca en las políticas de RRHH (vacaciones, licencias y reintegros).\n\nALCANCE - PUEDES:\n- Responder sobre vacaciones, licencias y reintegros usando SOLO la\n  información devuelta por la herramienta de políticas.\n- Personalizar la respuesta con la antigüedad del empleado.\n\nNO PUEDES:\n- Inventar datos, plazos o montos que no estén en las políticas.\n- Aprobar o rechazar solicitudes.\n- Opinar sobre temas legales, salariales o conflictos personales.\n- Responder temas ajenos a RRHH.\n\nDECISIÓN (elige exactamente una acción):\n- \"responder\": la herramienta devolvió información suficiente para contestar.\n- \"derivar\": el caso es personal o sensible, o las políticas no contienen la\n  información necesaria.\n- \"fuera_de_alcance\": la consulta no es un tema de RRHH.\n\nREGLAS ANTE LA DUDA:\n- Si hay ambigüedad o información incompleta, elige \"derivar\". Nunca adivines.\n- Consulta siempre la herramienta de políticas antes de responder.\n- Si la herramienta no devuelve resultados, elige \"derivar\".\n\nFORMATO DE SALIDA (JSON):\n- accion: \"responder\", \"derivar\" o \"fuera_de_alcance\"\n- respuesta: texto breve y claro para el empleado\n- motivo: una frase explicando por qué elegiste esa acción"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "e774bf3b-862f-4b22-acd4-aab7a2fa6578",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-5-5",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 5.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        288,
+        304
+      ],
+      "id": "0e6d7cd0-8a04-426c-b65a-62b3350dcfc7",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "v2zRG3mLWfdCEPD5",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "consulta-rrhh",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -528,
+        16
+      ],
+      "id": "6d8f01d5-5d7d-46aa-81a2-9056c7d7da10",
+      "name": "Webhook",
+      "webhookId": "799de200-5c1f-4a52-a93f-a81695d721c0"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"accion\": \"derivar\",\n  \"respuesta\": \"Texto de la respuesta para el empleado\",\n  \"motivo\": \"Por qué se eligió esta acción\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        304
+      ],
+      "id": "dc0c810f-cff3-4d3a-8682-ae5a077287f5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.accion }}",
+                    "rightValue": "responder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "17782394-ce7a-4f75-9e83-21b56913d7b4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Responder"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "5ad9d8c1-09c0-4709-bc0a-00569f9c4ff3",
+                    "leftValue": "={{ $json.output.accion }}",
+                    "rightValue": "derivar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Derivar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "4f34417b-ac3b-45a5-8d5b-241960ad0e19",
+                    "leftValue": "={{ $json.output.accion }}",
+                    "rightValue": "fuera_de_alcance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Fuera de alcance"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        1008,
+        -16
+      ],
+      "id": "371177cb-b7a3-4f54-8454-43230f1d0e07",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.query.email }}",
+        "subject": "Respuesta a tu consulta de RRHH",
+        "message": "={{ $json.output.respuesta }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        -192
+      ],
+      "id": "4437a72b-c317-4fe4-b675-9db031bce79f",
+      "name": "Send a message",
+      "webhookId": "49f1c72b-d38c-4d7a-a432-a73a2bb45fe0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XvLPSWS2qSK6rf3H",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw",
+          "mode": "list",
+          "cachedResultName": "Consultas derivadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Consultas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now }}",
+            "Nombre": "={{ $('Webhook').item.json.query.nombre }}",
+            "email ": "={{ $('Webhook').item.json.query.email }}",
+            "Pregunta": "={{ $('Webhook').item.json.query.pregunta }}",
+            "Motivo": "={{ $json.output.motivo }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pregunta",
+              "displayName": "Pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Motivo",
+              "displayName": "Motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1264,
+        -16
+      ],
+      "id": "6a208484-0a3a-4ac9-9273-18fcb82c9d41",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Mjf5YjnwhCQkEix",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.query.email }}",
+        "subject": "Respuesta a tu consulta de RRHH",
+        "message": "Tu consulta no corresponde a RRHH. Por favor, contactá al área indicada.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        128
+      ],
+      "id": "1ef4525b-77c4-48c3-a352-792996e9d7ba",
+      "name": "Send a message1",
+      "webhookId": "1ef1af30-a35a-45a6-9358-b9ea329f48e8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XvLPSWS2qSK6rf3H",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Consulta las políticas de RRHH de Pastelería Rica: vacaciones, licencias y reintegros.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        352
+      ],
+      "id": "706be14c-482c-40b7-93fc-d6581efecc5e",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "3nIkWvsXthzryMBr",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        416,
+        512
+      ],
+      "id": "fcd6e0f2-06f8-4b09-8d77-a7d260c0e148",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "96a2QNShYc3zz52z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw",
+          "mode": "list",
+          "cachedResultName": "Consultas derivadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1229070110,
+          "mode": "list",
+          "cachedResultName": "Empleados",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit#gid=1229070110"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $('Webhook').item.json.query.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "7a93a10b-dd36-4c24-a015-6473b80cdb9b",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Mjf5YjnwhCQkEix",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d4621ef2-e996-4397-bb69-722cd5dac03d",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        -48,
+        16
+      ],
+      "id": "541cf986-9bb2-42b4-b2da-72b2e1391b77",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw",
+          "mode": "list",
+          "cachedResultName": "Consultas derivadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Consultas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now }}",
+            "Nombre": "={{ $('Webhook').item.json.query.nombre }}",
+            "email ": "={{ $('Webhook').item.json.query.email }}",
+            "Pregunta": "={{ $('Webhook').item.json.query.pregunta }}",
+            "Motivo": "Empleado no encontrado en la base"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pregunta",
+              "displayName": "Pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Motivo",
+              "displayName": "Motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        176,
+        96
+      ],
+      "id": "b1640aa5-3908-4704-bb8d-050d27157f62",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Mjf5YjnwhCQkEix",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw",
+          "mode": "list",
+          "cachedResultName": "Consultas derivadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Consultas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ttvaxwH7M88RpuGYa2W6DHAvnTGqCKIumCx01OsCaXw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Motivo": "{{ $json.output?.motivo || 'Acción no reconocida: derivar a RRHH' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pregunta",
+              "displayName": "Pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Motivo",
+              "displayName": "Motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1264,
+        368
+      ],
+      "id": "b2b58678-aac4-4a00-bff1-16405802d847",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Mjf5YjnwhCQkEix",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Entrada",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -432,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "38e15ece-8160-45f9-a4b5-c69c14e7c2f2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## AGENTE",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        448,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "be2a2f56-b38d-4aba-95db-7664ca74ae3c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Salidas",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        960,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "3813ac02-7bec-4df6-9682-f6f3b6d9c982",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Control de errores",
+        "height": 80,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        704,
+        112
+      ],
+      "typeVersion": 1,
+      "id": "100ea233-6ce5-4347-afcf-f94050a5735c",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        []
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "6af6edf9-8704-48ea-9b67-c1ae6c9150d1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "213083f84939dde4724f2bcd9890e3956bcace63e1010759f5e45793371b60ad"
+  },
+  "nodeGroups": [],
+  "id": "2zO4ZF8MIIcQ4XlM",
+  "tags": []
+}
