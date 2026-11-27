@@ -90,6 +90,19 @@ información desactualizada).
 
 ## 7. Manejo de errores
 
-*(pendiente: se completa al implementarlo)*
+1. **Empleado no encontrado (dato ambiguo o inexistente):** el nodo Google
+   Sheets lee la hoja `Empleados` con "Always Output Data". Un nodo **IF**
+   verifica que el email exista. Si no existe, el flujo no llega al agente y
+   registra el caso en la hoja `Consultas derivadas` con el motivo
+   "Empleado no encontrado en la base".
 
-1. **[Punto 1]**: [qué puede fallar y cómo se
+2. **Falla del agente (Supabase, API del modelo o respuesta inválida):**
+   el AI Agent usa *On Error: Continue (using error output)*, por lo que un
+   fallo del Vector Store o del modelo no corta el flujo y el caso queda
+   registrado para RRHH. Además, el **Switch** tiene una salida *Fallback*
+   que captura cualquier acción distinta de las tres permitidas y la deriva
+   a una persona.
+
+3. **Límites en el system prompt:** ante ambigüedad o falta de información
+   en las políticas, el agente tiene instrucción explícita de derivar en
+   vez de inventar.
