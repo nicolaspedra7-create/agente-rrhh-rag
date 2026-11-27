@@ -1,0 +1,157 @@
+{
+  "name": "Carga de documentos RAG",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "06a33c89-d611-4ee8-b5b6-e9479a69b557",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3934c9c-f4ed-445a-88bb-b67a2cb3ffb5",
+              "name": "texto",
+              "value": "Vacaciones: 14 días hasta 5 años de antigüedad, 21 días de 5 a 10, 28 días desde 10. Licencias: 3 días por casamiento, 2 por nacimiento de hijo, 1 por mudanza, 1 dia por cumpleaños. 20 dias por estudio. Reintegros: gastos de capacitación con comprobante, dentro de 30 días.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "28ede632-3235-4d5d-9665-bfab704beb99",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f14be554-31be-453c-ac63-b9c0c805f12d",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "3nIkWvsXthzryMBr",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        160
+      ],
+      "id": "3fb27200-912a-42c7-a9fd-4ae9ff594738",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "96a2QNShYc3zz52z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.texto }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        160
+      ],
+      "id": "0e169562-1d2e-436c-bd56-9b454bb389f6",
+      "name": "Default Data Loader"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "521f09a4-1ddc-407e-82ba-9aa0a606b0ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "213083f84939dde4724f2bcd9890e3956bcace63e1010759f5e45793371b60ad"
+  },
+  "nodeGroups": [],
+  "id": "9WbrqY1bgbBLDxGL",
+  "tags": []
+}
