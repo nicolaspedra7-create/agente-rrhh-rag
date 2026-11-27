@@ -6,9 +6,11 @@ con RAG (Retrieval-Augmented Generation).
 
 ## Contenido del repositorio
 
-- `workflow-agente-rag.json`: workflow principal exportado desde n8n.
-- `workflow-carga-documentos.json`: workflow que carga las políticas en el Vector Store.
-- `/capturas`: capturas del canvas y de una ejecución exitosa.
+- `Proyecto final (2).json`: workflow principal exportado desde n8n.
+- `Carga de documentos RAG.json`: workflow que carga las políticas en el Vector Store.
+- `Proyecto final version ultima.JPG`: captura del canvas del workflow.
+- `CapturaRAG.JPG`: captura del RAG / ejecución.
+- `email recibido.JPG`: mail recibido por el empleado.
 
 ---
 
