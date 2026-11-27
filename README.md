@@ -163,12 +163,12 @@ FORMATO DE SALIDA (JSON):
 
 **Canvas del workflow:**
 
-![Canvas del workflow](capturas/canvas.png)
+![Canvas del workflow](Proyecto%20final%20version%20ultima.JPG)
 
-**Ejecución de prueba exitosa:**
+**RAG / ejecución de prueba:**
 
-![Ejecución exitosa](capturas/ejecucion.png)
+![RAG y ejecución](CapturaRAG.JPG)
 
 **Mail recibido por el empleado:**
 
-![Mail recibido](capturas/mail.png)
+![Mail recibido](email%20recibido.JPG)
